@@ -409,7 +409,7 @@ export function AnnotationLayer({
 
       {/* Class picker dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
+        <DialogContent className="bg-white">
           <DialogHeader>
             <DialogTitle>Assign Class Label</DialogTitle>
             <DialogDescription>
