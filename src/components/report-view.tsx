@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { getReport, getImageResultsByReport, getImage } from '@/lib/storage';
 import { Report, ImageResult } from '@/types';
 import { CLASS_COLORS } from '@/lib/constants';
+import { hasDefectivePredictions } from '@/lib/utils';
 
 interface ReportViewProps {
   reportId: string;
@@ -98,7 +99,7 @@ export function ReportView({
 
   const defectiveResults = useMemo(
     () => imageResults.filter(
-      (ir) => ir.status === 'completed' && ir.predictions.length > 0
+      (ir) => ir.status === 'completed' && hasDefectivePredictions(ir.predictions)
     ),
     [imageResults]
   );
