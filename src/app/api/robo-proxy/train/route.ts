@@ -66,8 +66,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!roboflowResponse.ok) {
+      const errorBody = await roboflowResponse.text();
+      console.error('Roboflow train error:', roboflowResponse.status, errorBody);
       return NextResponse.json(
-        { error: 'Roboflow API request failed' },
+        { error: `Roboflow API error (${roboflowResponse.status}): ${errorBody || 'Unknown error'}` },
         { status: 500 }
       );
     }
