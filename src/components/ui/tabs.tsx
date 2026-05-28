@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 
 function Tabs({
   className,
-  orientation = "horizontal",
+  orientation = "vertical",
   ...props
 }: TabsPrimitive.Root.Props) {
   return (
@@ -15,7 +15,7 @@ function Tabs({
       data-slot="tabs"
       data-orientation={orientation}
       className={cn(
-        "group/tabs flex gap-2 data-horizontal:flex-col",
+        "group/tabs gap-2 data-vertical:flex-col",
         className
       )}
       {...props}
