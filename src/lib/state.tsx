@@ -121,6 +121,7 @@ export const useAppStore = create<AppState>()(
       name: 'solar-app-storage',
       partialize: (state) => ({
         activeModelVersion: state.activeModelVersion,
+        forceTrain: state.forceTrain,
       }),
     }
   )
