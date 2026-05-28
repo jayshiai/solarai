@@ -5,6 +5,7 @@ import { ArrowLeft, Search, CheckCircle2, XCircle, Image as ImageIcon } from 'lu
 import { ImageResult } from '@/types';
 import { getImageResultsByReport, getImage } from '@/lib/storage';
 import { CLASS_COLORS } from '@/lib/constants';
+import { hasDefectivePredictions } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -86,10 +87,10 @@ export function ImageGallery({ reportId, onInspectImage, onBack }: ImageGalleryP
 
     switch (filter) {
       case 'defective':
-        filtered = filtered.filter((img) => img.predictions.length > 0);
+        filtered = filtered.filter((img) => hasDefectivePredictions(img.predictions));
         break;
       case 'clean':
-        filtered = filtered.filter((img) => img.status === 'completed' && img.predictions.length === 0);
+        filtered = filtered.filter((img) => img.status === 'completed' && !hasDefectivePredictions(img.predictions));
         break;
       case 'failed':
         filtered = filtered.filter((img) => img.status === 'failed');
@@ -114,8 +115,8 @@ export function ImageGallery({ reportId, onInspectImage, onBack }: ImageGalleryP
 
   const counts = useMemo(() => {
     const all = imageResults.length;
-    const defective = imageResults.filter((img) => img.predictions.length > 0).length;
-    const clean = imageResults.filter((img) => img.status === 'completed' && img.predictions.length === 0).length;
+    const defective = imageResults.filter((img) => hasDefectivePredictions(img.predictions)).length;
+    const clean = imageResults.filter((img) => img.status === 'completed' && !hasDefectivePredictions(img.predictions)).length;
     const failed = imageResults.filter((img) => img.status === 'failed').length;
     return { all, defective, clean, failed };
   }, [imageResults]);
