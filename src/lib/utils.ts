@@ -7,6 +7,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function hasDefectivePredictions(predictions: Prediction[]): boolean {
+  return predictions.some((p) => p.class !== 'Panel');
+}
+
 export async function extractFrames(
   videoFile: File,
   sampleFps = VIDEO_SAMPLE_FPS,
@@ -51,8 +55,4 @@ export async function extractFrames(
       captureFrame();
     };
   });
-}
-
-export function hasDefectivePredictions(predictions: Prediction[]): boolean {
-  return predictions.some((p) => p.class !== 'Panel');
 }
