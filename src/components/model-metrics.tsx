@@ -33,14 +33,20 @@ interface DistributionBarProps {
   label: string;
   percentage: number;
   color: string;
+  count?: number;
 }
 
-export function DistributionBar({ label, percentage, color }: DistributionBarProps) {
+export function DistributionBar({ label, percentage, color, count }: DistributionBarProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-card-foreground">{label}</span>
-        <span className="tabular-nums text-muted-foreground">{percentage}%</span>
+        <div className="flex items-center gap-2">
+          {count !== undefined && (
+            <span className="text-xs tabular-nums text-muted-foreground">{count.toLocaleString()}</span>
+          )}
+          <span className="tabular-nums text-muted-foreground">{percentage}%</span>
+        </div>
       </div>
       <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
         <div
