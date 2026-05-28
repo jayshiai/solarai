@@ -232,6 +232,10 @@ export function AnnotationLayer({
           e.stopPropagation();
           handlePredictionClick(i);
         }}
+        onMouseEnter={() => {
+          if (!isPaused) return;
+          setSelectedPredictionIndex(i);
+        }}
       />
     );
   });
@@ -310,7 +314,7 @@ export function AnnotationLayer({
       </div>
 
       {isPaused && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-xl bg-popover border border-border shadow-lg p-1.5 z-50">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-xl bg-white border border-border shadow-lg p-1.5 z-50">
           <Button
             variant={mode === 'select' ? 'default' : 'outline'}
             size="sm"
@@ -413,7 +417,7 @@ export function AnnotationLayer({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
+          <div className="py-4 bg-white">
             <Select
               value={selectedClass}
               onValueChange={(val) => val && setSelectedClass(val)}
@@ -421,7 +425,7 @@ export function AnnotationLayer({
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select class…" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white">
                 {ANOMALY_CLASSES.map((cls) => (
                   <SelectItem key={cls} value={cls}>
                     {cls}
