@@ -45,6 +45,15 @@ interface AppState {
   setTrainingJob: (job: { id: string; status: string; project: string; version: number } | null) => void;
   clearTrainingJob: () => void;
 
+  mockTrainingActive: boolean;
+  setMockTrainingActive: (active: boolean) => void;
+
+  forceTrain: boolean;
+  setForceTrain: (enabled: boolean) => void;
+
+  activeModelTab: string;
+  setActiveModelTab: (tab: string) => void;
+
   activeModelVersion: number;
   setActiveModelVersion: (version: number) => void;
 }
@@ -95,6 +104,15 @@ export const useAppStore = create<AppState>()(
       trainingJob: null,
       setTrainingJob: (job) => set({ trainingJob: job }),
       clearTrainingJob: () => set({ trainingJob: null }),
+
+      mockTrainingActive: false,
+      setMockTrainingActive: (active) => set({ mockTrainingActive: active }),
+
+      forceTrain: true,
+      setForceTrain: (enabled) => set({ forceTrain: enabled }),
+
+      activeModelTab: 'overview',
+      setActiveModelTab: (tab) => set({ activeModelTab: tab }),
 
       activeModelVersion: 1,
       setActiveModelVersion: (version) => set({ activeModelVersion: version }),
