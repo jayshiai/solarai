@@ -154,26 +154,7 @@ const TRANSFORMS: TransformDef[] = [
         height: bbox.width,
       };
     },
-  },
-  {
-    name: 'flip_v_then_90_cw',
-    getCanvasSize: (W, H) => ({ width: H, height: W }),
-    setupContext: (ctx, W, H) => {
-      ctx.translate(H, 0);
-      ctx.rotate(Math.PI / 2);
-      ctx.scale(1, -1);
-    },
-    transformBBox: (bbox, W, H) => {
-      const flippedY = H - bbox.y - bbox.height;
-      return {
-        ...bbox,
-        x: H - flippedY - bbox.height,
-        y: bbox.x,
-        width: bbox.height,
-        height: bbox.width,
-      };
-    },
-  },
+  }
 ];
 
 async function applyTransform(
