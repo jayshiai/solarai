@@ -16,6 +16,7 @@ export interface Correction {
   width: number;
   height: number;
   timestamp: number;
+  comment?: string;
 }
 
 export interface StoredImage {
