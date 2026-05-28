@@ -14,7 +14,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/state';
-import { getAllCorrections, getImage } from '@/lib/storage';
+import { getAllCorrections, getImage, getImageResult } from '@/lib/storage';
 import { generateVariants, type AugmentBBox } from '@/lib/augment';
 import { triggerTraining } from '@/lib/roboflow-client';
 import { MetricCard, DistributionBar, DetailItem } from '@/components/model-metrics';
@@ -79,13 +79,30 @@ export function ModelPage() {
         const image = await getImage(imageId);
         if (!image) continue;
 
-        const bboxes: AugmentBBox[] = corrections.map((c) => ({
-          x: c.x,
-          y: c.y,
-          width: c.width,
-          height: c.height,
-          label: c.label as AugmentBBox['label'],
-        }));
+        const bboxes: AugmentBBox[] = [];
+
+        const result = await getImageResult(imageId);
+        if (result && result.predictions.length > 0) {
+          for (const pred of result.predictions) {
+            bboxes.push({
+              x: pred.x - pred.width / 2,
+              y: pred.y - pred.height / 2,
+              width: pred.width,
+              height: pred.height,
+              label: pred.class as AugmentBBox['label'],
+            });
+          }
+        }
+
+        for (const c of corrections) {
+          bboxes.push({
+            x: c.x,
+            y: c.y,
+            width: c.width,
+            height: c.height,
+            label: c.label as AugmentBBox['label'],
+          });
+        }
 
         const imageVariants = await generateVariants(image.blob, bboxes);
         allVariants.push(...imageVariants);
