@@ -135,13 +135,6 @@ export function ImageInspector({
           Back to Gallery
         </Button>
         <span className="flex-1 truncate font-medium">{imageResult.name}</span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsPaused(!isPaused)}
-        >
-          {isPaused ? 'Done' : 'Suggest Corrections'}
-        </Button>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
@@ -454,10 +447,10 @@ export function UploadPage() {
   }
 
   return (
-    <div className="flex h-full flex-col items-center justify-start p-8 overflow-auto">
+    <div className="flex h-full flex-col items-center justify-center p-8 overflow-auto">
       <div
         className={cn(
-          'flex w-full max-w-2xl flex-col items-center gap-6 rounded-2xl border-2 border-dashed p-12 transition-colors shrink-0',
+          'flex w-full max-w-2xl h-[50vh] flex-col items-center justify-center gap-6 rounded-2xl border-2 border-dashed p-12 transition-colors shrink-0',
           dragOver
             ? 'border-primary bg-primary/5'
             : 'border-border bg-card'
@@ -534,10 +527,11 @@ export function UploadPage() {
       </div>
 
       {previews.length > 0 && (
-        <div className="w-full max-w-2xl mt-6 space-y-3">
+        <div className="w-full max-w-xl mt-6 space-y-3">
           {previews.map((preview, index) => (
-            <Card key={index} className="p-3 flex items-center gap-3">
-              {preview.isZip ? (
+            <Card key={index} className="p-3 flex items-start gap-3">
+              <div className=' flex justify-between gap-3'>
+                {preview.isZip ? (
                 <div className="flex size-12 items-center justify-center rounded bg-muted shrink-0">
                   <FileArchive className="size-6 text-muted-foreground" />
                 </div>
@@ -572,6 +566,7 @@ export function UploadPage() {
               >
                 <Trash2 className="size-4 text-muted-foreground" />
               </Button>
+              </div>
             </Card>
           ))}
 
