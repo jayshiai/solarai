@@ -211,7 +211,7 @@ export function BatchUploader({
     setFileStates(initialMap);
 
     toast.success('Upload started', {
-      description: `${selectedIndices.length} variant(s) will be uploaded to Roboflow.`,
+      description: `${selectedIndices.length} variant(s) will be uploaded to Dataset.`,
     });
 
     const { completed, total } = await processBatch(selectedIndices);
@@ -308,10 +308,10 @@ export function BatchUploader({
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h3 className="text-base font-semibold tracking-tight text-foreground">
-          Batch Upload to Roboflow
+          Batch Upload to Dataset
         </h3>
         <p className="text-sm text-muted-foreground">
-          Upload selected augmented variants to your Roboflow dataset
+          Upload selected augmented variants to your dataset
         </p>
       </div>
 
@@ -322,7 +322,7 @@ export function BatchUploader({
           className="w-full gap-2"
         >
           <Upload className="size-4" />
-          Upload to Roboflow
+          Upload to Dataset
         </Button>
       )}
 
