@@ -43,12 +43,14 @@ const DEFAULT_STAGES: Stage[] = [
 ];
 
 const STAGE_TIMINGS_MS: number[] = [
-   15000,
-   15000,
+  15000,
+  15000,
   300000,
-   15000,
-   30000,
+  15000,
+  30000,
 ];
+
+const MOCK_LS_KEY = 'solar-mock-start';
 
 const POLL_INTERVAL = 30000;
 
@@ -202,11 +204,13 @@ export function TrainingProgress() {
 
   const startMockTraining = useCallback(() => {
     clearAllTimeouts();
-    setMockStages([...DEFAULT_STAGES]);
     setDisplayMode('mock');
+    const startedAt = Date.now();
+    localStorage.setItem(MOCK_LS_KEY, String(startedAt));
 
-    const advanceStage = (index: number) => {
+    const advanceStage = (index: number, elapsedOffset = 0) => {
       if (index >= DEFAULT_STAGES.length) {
+        localStorage.removeItem(MOCK_LS_KEY);
         setActiveModelVersion(activeModelVersion + 1);
         setDisplayMode('idle');
         setMockStages(DEFAULT_STAGES.map((s) => ({ ...s, status: 'completed' as StageStatus })));
@@ -219,13 +223,13 @@ export function TrainingProgress() {
             ? { ...s, status: 'completed' }
             : i === index
               ? { ...s, status: 'active', progress: 0 }
-              : s
+              : { ...s, status: 'pending', progress: undefined }
         )
       );
 
       const duration = STAGE_TIMINGS_MS[index];
       const tickMs = 500;
-      let elapsed = 0;
+      let elapsed = elapsedOffset;
 
       const progressInterval = setInterval(() => {
         elapsed += tickMs;
@@ -242,9 +246,107 @@ export function TrainingProgress() {
       timeoutsRef.current.push(progressInterval as unknown as ReturnType<typeof setTimeout>);
     };
 
-    const initialTimeout = setTimeout(() => advanceStage(0), 400);
-    timeoutsRef.current.push(initialTimeout);
+    const totalBeforeFirst = 0;
+    advanceStage(0, totalBeforeFirst);
   }, [clearAllTimeouts, activeModelVersion, setActiveModelVersion]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(MOCK_LS_KEY);
+    if (!saved) return;
+
+    const startedAt = parseInt(saved, 10);
+    const elapsedTotal = Date.now() - startedAt;
+    const totalDuration = STAGE_TIMINGS_MS.reduce((a, b) => a + b, 0);
+
+    if (elapsedTotal >= totalDuration) {
+      localStorage.removeItem(MOCK_LS_KEY);
+      setMockStages(DEFAULT_STAGES.map((s) => ({ ...s, status: 'completed' as StageStatus })));
+      return;
+    }
+
+    setDisplayMode('mock');
+    let accumulated = 0;
+    let resumeIndex = 0;
+    let resumeOffset = 0;
+
+    for (let i = 0; i < STAGE_TIMINGS_MS.length; i++) {
+      if (elapsedTotal < accumulated + STAGE_TIMINGS_MS[i]) {
+        resumeIndex = i;
+        resumeOffset = elapsedTotal - accumulated;
+        break;
+      }
+      accumulated += STAGE_TIMINGS_MS[i];
+    }
+
+    setMockStages(
+      DEFAULT_STAGES.map((s, i) => {
+        if (i < resumeIndex) return { ...s, status: 'completed' };
+        if (i === resumeIndex) return { ...s, status: 'active', progress: Math.min((resumeOffset / STAGE_TIMINGS_MS[i]) * 100, 100) };
+        return { ...s, status: 'pending' };
+      })
+    );
+
+    const duration = STAGE_TIMINGS_MS[resumeIndex];
+    const tickMs = 500;
+    let elapsed = resumeOffset;
+
+    const progressInterval = setInterval(() => {
+      elapsed += tickMs;
+      const progress = Math.min((elapsed / duration) * 100, 100);
+      setMockStages((prev) =>
+        prev.map((s, i) => (i === resumeIndex ? { ...s, progress } : s))
+      );
+      if (elapsed >= duration) {
+        clearInterval(progressInterval);
+        const nextIndex = resumeIndex + 1;
+        if (nextIndex < DEFAULT_STAGES.length) {
+          let nextAccumulated = 0;
+          for (let j = 0; j < nextIndex; j++) nextAccumulated += STAGE_TIMINGS_MS[j];
+          const nextOffset = elapsedTotal - nextAccumulated;
+          
+          const resumeNext = (idx: number, off: number) => {
+            if (idx >= DEFAULT_STAGES.length) {
+              localStorage.removeItem(MOCK_LS_KEY);
+              setActiveModelVersion(activeModelVersion + 1);
+              setDisplayMode('idle');
+              setMockStages(DEFAULT_STAGES.map((s) => ({ ...s, status: 'completed' as StageStatus })));
+              return;
+            }
+            setMockStages((prev) =>
+              prev.map((s, i) =>
+                i < idx ? { ...s, status: 'completed' }
+                : i === idx ? { ...s, status: 'active', progress: 0 }
+                : { ...s, status: 'pending' }
+              )
+            );
+            const dur = STAGE_TIMINGS_MS[idx];
+            const tick = 500;
+            let el = off;
+            const intvl = setInterval(() => {
+              el += tick;
+              const prog = Math.min((el / dur) * 100, 100);
+              setMockStages((prev) =>
+                prev.map((s, i) => (i === idx ? { ...s, progress: prog } : s))
+              );
+              if (el >= dur) {
+                clearInterval(intvl);
+                resumeNext(idx + 1, 0);
+              }
+            }, tick);
+            timeoutsRef.current.push(intvl as unknown as ReturnType<typeof setTimeout>);
+          };
+          resumeNext(nextIndex, Math.max(0, nextOffset));
+        } else {
+          localStorage.removeItem(MOCK_LS_KEY);
+          setActiveModelVersion(activeModelVersion + 1);
+          setDisplayMode('idle');
+          setMockStages(DEFAULT_STAGES.map((s) => ({ ...s, status: 'completed' as StageStatus })));
+        }
+      }
+    }, tickMs);
+
+    timeoutsRef.current.push(progressInterval as unknown as ReturnType<typeof setTimeout>);
+  }, [setActiveModelVersion, activeModelVersion]);
 
   useEffect(() => {
     return () => {
