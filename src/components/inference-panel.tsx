@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { Info, BoxSelect } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/lib/state';
@@ -28,6 +28,16 @@ export function InferencePanel({
     setConfidenceThreshold,
     activeModelVersion,
   } = useAppStore();
+  const itemRefs = useRef<Map<number, HTMLButtonElement>>(new Map());
+
+  useEffect(() => {
+    if (selectedPredictionIndex !== null) {
+      const el = itemRefs.current.get(selectedPredictionIndex);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+  }, [selectedPredictionIndex]);
 
   const filteredPredictions = useMemo(() => {
     return predictions
@@ -79,7 +89,7 @@ export function InferencePanel({
       </div>
 
       <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full">
+        <ScrollArea className="h-full max-h-[80vh]">
           <div className="flex flex-col gap-2 p-3">
             {filteredPredictions.length === 0 && (
               <div className="flex flex-col items-center justify-center gap-3 py-12 text-center text-muted-foreground">
@@ -103,6 +113,13 @@ export function InferencePanel({
               return (
                 <button
                   key={prediction.originalIndex}
+                  ref={(el) => {
+                    if (el) {
+                      itemRefs.current.set(prediction.originalIndex, el);
+                    } else {
+                      itemRefs.current.delete(prediction.originalIndex);
+                    }
+                  }}
                   type="button"
                   onClick={() =>
                     onSelectPrediction(
