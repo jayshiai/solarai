@@ -107,6 +107,8 @@ export function AnnotationLayer({
   const [selectedClass, setSelectedClass] = useState<string>(
     ANOMALY_CLASSES[0]
   );
+  const [commentText, setCommentText] = useState('');
+  const [hoveredCommentId, setHoveredCommentId] = useState<string | null>(null);
 
   const mouseToImageCoords = useCallback(
     (clientX: number, clientY: number) => {
@@ -179,6 +181,7 @@ export function AnnotationLayer({
       width: drawRect.width,
       height: drawRect.height,
       timestamp: Date.now(),
+      comment: commentText.trim() || undefined,
     };
 
     addCorrection(correction);
@@ -186,8 +189,9 @@ export function AnnotationLayer({
 
     setDialogOpen(false);
     setDrawRect(null);
+    setCommentText('');
     setMode('select');
-  }, [drawRect, imageId, selectedClass, addCorrection, setMode]);
+  }, [drawRect, imageId, selectedClass, commentText, addCorrection, setMode]);
 
   const handlePredictionClick = useCallback(
     (index: number) => {
@@ -246,25 +250,26 @@ export function AnnotationLayer({
     .map((corr) => {
       const isDeleteMode = mode === 'delete';
       return (
-        <rect
-          key={corr.id}
-          x={corr.x}
-          y={corr.y}
-          width={corr.width}
-          height={corr.height}
-          fill="rgba(59, 130, 246, 0.15)"
-          stroke="#3b82f6"
-          strokeWidth={2}
-          strokeDasharray="6 4"
-          className={cn(
-            'transition-all',
-            isDeleteMode && 'cursor-pointer hover:stroke-red-500'
-          )}
-          onClick={(e) => {
-            e.stopPropagation();
-            if (isDeleteMode) handleDeleteCorrection(corr.id);
-          }}
-        />
+        <g key={corr.id}>
+          <rect
+            x={corr.x}
+            y={corr.y}
+            width={corr.width}
+            height={corr.height}
+            fill="rgba(59, 130, 246, 0.15)"
+            stroke="#3b82f6"
+            strokeWidth={2}
+            strokeDasharray="6 4"
+            className={cn(
+              'transition-all',
+              isDeleteMode && 'cursor-pointer hover:stroke-red-500'
+            )}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isDeleteMode) handleDeleteCorrection(corr.id);
+            }}
+          />
+        </g>
       );
     });
 
@@ -312,6 +317,67 @@ export function AnnotationLayer({
             />
           )}
         </svg>
+
+        {corrections
+          .filter((corr) => corr.imageId === imageId && corr.comment)
+          .map((corr) => {
+            const screenX = imgBounds.left + (corr.x + corr.width) * (imgBounds.width / imageWidth);
+            const screenY = imgBounds.top + corr.y * (imgBounds.height / imageHeight);
+            return (
+              <div
+                key={`comment-${corr.id}`}
+                className="absolute z-40 cursor-pointer"
+                style={{
+                  left: screenX - 4,
+                  top: screenY - 18,
+                }}
+                onMouseEnter={() => setHoveredCommentId(corr.id)}
+                onMouseLeave={() => setHoveredCommentId(null)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#000000"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M2.992 16.342a2 2 0 0 1 .094 1.167l-1.065 3.29a1 1 0 0 0 1.236 1.168l3.413-.998a2 2 0 0 1 1.099.092 10 10 0 1 0-4.777-4.719" fill="white"/>
+                  <path d="M12 8v4"/>
+                  <path d="M12 16h.01"/>
+                </svg>
+                {hoveredCommentId === corr.id && (
+                  <div
+                    className="absolute left-6 top-0 z-50 rounded-lg bg-black/85 px-3 py-2 text-white shadow-lg border border-amber-500/30 w-[220px]"
+                  >
+                    <div className="text-xs font-bold text-amber-400">{corr.label}</div>
+                    <div className="text-[11px] text-gray-300 mt-0.5 leading-snug">{corr.comment}</div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+        <div
+          className="absolute z-50"
+          style={{
+            left: imgBounds.left + imgBounds.width - 12,
+            top: imgBounds.top + imgBounds.height - 12,
+            transform: 'translate(-100%, -100%)',
+          }}
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsPaused(!isPaused)}
+            className="shadow-lg bg-background/80 backdrop-blur"
+          >
+            {isPaused ? 'Done' : 'Suggest Corrections'}
+          </Button>
+        </div>
       </div>
 
       {isPaused && (
@@ -323,7 +389,7 @@ export function AnnotationLayer({
             className={cn(
               'gap-1.5',
               mode === 'select'
-                ? 'shadow-md ring-1 ring-primary/30'
+                ? 'shadow-md ring-1 ring-primary/30 bg-black text-white'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -348,7 +414,7 @@ export function AnnotationLayer({
             className={cn(
               'gap-1.5',
               mode === 'draw'
-                ? 'shadow-md ring-1 ring-primary/30'
+                ? 'shadow-md ring-1 ring-primary/30 bg-black text-white'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -373,7 +439,7 @@ export function AnnotationLayer({
             className={cn(
               'gap-1.5',
               mode === 'delete'
-                ? 'shadow-md ring-1 ring-primary/30'
+                ? 'shadow-md ring-1 ring-primary/30 bg-black text-white'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -418,7 +484,7 @@ export function AnnotationLayer({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4 bg-white">
+          <div className="py-4 bg-white space-y-3">
             <Select
               value={selectedClass}
               onValueChange={(val) => val && setSelectedClass(val)}
@@ -434,6 +500,12 @@ export function AnnotationLayer({
                 ))}
               </SelectContent>
             </Select>
+            <textarea
+              placeholder="Add a comment (optional)..."
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              className="w-full min-h-[80px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-y"
+            />
           </div>
 
           <DialogFooter>
