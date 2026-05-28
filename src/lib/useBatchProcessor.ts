@@ -5,6 +5,7 @@ import { detect } from './roboflow';
 import { useAppStore } from './state';
 import { saveReport, saveImageResult, generateId } from './storage';
 import type { StoredImage, ImageResult, Report } from '@/types';
+import { hasDefectivePredictions } from './utils';
 import { toast } from 'sonner';
 import { ROBOFLOW_API_KEY, ROBOFLOW_WORKSPACE, ROBOFLOW_PROJECT } from './constants';
 
@@ -143,7 +144,7 @@ export function useBatchProcessor(): UseBatchProcessorReturn {
         const processedCount = allResults.filter((r) => r.status === 'completed').length;
         const failedCount = allResults.filter((r) => r.status === 'failed').length;
         const defectiveCount = allResults.filter(
-          (r) => r.status === 'completed' && r.predictions.length > 0
+          (r) => r.status === 'completed' && hasDefectivePredictions(r.predictions)
         ).length;
 
         const defectClassBreakdown: Record<string, number> = {};
