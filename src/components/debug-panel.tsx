@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Bug, ChevronDown, ChevronRight, RotateCcw, CheckCircle, AlertTriangle } from 'lucide-react';
-import { getAllCorrections, getImage } from '@/lib/storage';
+import { getAllCorrections, getImage, getImageResult } from '@/lib/storage';
 import { generateVariants, convertToYOLO, type AugmentBBox } from '@/lib/augment';
 import { ANOMALY_CLASSES } from '@/lib/constants';
 import type { Correction, Variant } from '@/types';
@@ -87,13 +87,30 @@ export function DebugPanel() {
       const img = await getImage(group.imageId);
       if (!img) return;
 
-      const bboxes: AugmentBBox[] = group.corrections.map((c) => ({
-        x: c.x,
-        y: c.y,
-        width: c.width,
-        height: c.height,
-        label: c.label as AugmentBBox['label'],
-      }));
+      const bboxes: AugmentBBox[] = [];
+
+      const result = await getImageResult(group.imageId);
+      if (result && result.predictions.length > 0) {
+        for (const pred of result.predictions) {
+          bboxes.push({
+            x: pred.x - pred.width / 2,
+            y: pred.y - pred.height / 2,
+            width: pred.width,
+            height: pred.height,
+            label: pred.class as AugmentBBox['label'],
+          });
+        }
+      }
+
+      for (const c of group.corrections) {
+        bboxes.push({
+          x: c.x,
+          y: c.y,
+          width: c.width,
+          height: c.height,
+          label: c.label as AugmentBBox['label'],
+        });
+      }
 
       const variants = await generateVariants(img.blob, bboxes);
       const results: InspectionResult[] = variants.map((v, vi) => {
