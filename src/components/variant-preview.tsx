@@ -1,16 +1,48 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Check, Eye } from 'lucide-react';
+import { Check, Eye, ZoomIn } from 'lucide-react';
 import { Variant } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { CLASS_COLORS, ANOMALY_CLASSES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 
 interface VariantPreviewProps {
   variants: Variant[];
   onSelectionChange: (selectedIndices: number[]) => void;
+}
+
+interface ParsedAnnotation {
+  classId: number;
+  cx: number;
+  cy: number;
+  w: number;
+  h: number;
+}
+
+function parseAnnotations(yoloText: string): ParsedAnnotation[] {
+  return yoloText
+    .trim()
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split(' ').map(Number);
+      return {
+        classId: parts[0],
+        cx: parts[1],
+        cy: parts[2],
+        w: parts[3],
+        h: parts[4],
+      };
+    });
 }
 
 export function VariantPreview({ variants, onSelectionChange }: VariantPreviewProps) {
@@ -21,6 +53,9 @@ export function VariantPreview({ variants, onSelectionChange }: VariantPreviewPr
   });
 
   const [objectUrls, setObjectUrls] = useState<Map<number, string>>(new Map());
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogVariant, setDialogVariant] = useState<Variant | null>(null);
+  const [dialogUrl, setDialogUrl] = useState<string>('');
 
   useEffect(() => {
     const urls = new Map<number, string>();
@@ -61,6 +96,12 @@ export function VariantPreview({ variants, onSelectionChange }: VariantPreviewPr
   const getAnnotationCount = (yoloAnnotation: string) => {
     if (!yoloAnnotation.trim()) return 0;
     return yoloAnnotation.trim().split('\n').length;
+  };
+
+  const openDialog = (variant: Variant, url: string) => {
+    setDialogVariant(variant);
+    setDialogUrl(url);
+    setDialogOpen(true);
   };
 
   if (variants.length === 0) {
@@ -116,36 +157,41 @@ export function VariantPreview({ variants, onSelectionChange }: VariantPreviewPr
             <Card
               key={index}
               className={cn(
-                'group/card relative cursor-pointer overflow-hidden rounded-xl border transition-all duration-200',
+                'group/card relative overflow-hidden rounded-xl border transition-all duration-200',
                 isChecked
                   ? 'border-primary/60 ring-1 ring-primary/20'
                   : 'border-border hover:border-primary/40 hover:ring-1 hover:ring-primary/10'
               )}
-              onClick={() => toggleIndex(index)}
             >
               <div
                 className={cn(
-                  'absolute right-2 top-2 z-10 flex size-6 items-center justify-center rounded-md border-2 transition-all',
+                  'absolute right-2 top-2 z-10 flex size-6 items-center justify-center rounded-md border-2 transition-all cursor-pointer',
                   isChecked
                     ? 'border-primary bg-primary text-primary-foreground'
                     : 'border-border bg-background/80 text-transparent hover:border-primary/60'
                 )}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleIndex(index);
-                }}
+                onClick={() => toggleIndex(index)}
               >
                 <Check className="size-3.5" />
               </div>
 
               <div className="relative aspect-square overflow-hidden bg-muted">
                 {imgSrc && (
-                  <img
-                    src={imgSrc}
-                    alt={variant.transformName}
-                    className="h-full w-full object-cover transition-transform duration-200 group-hover/card:scale-[1.03]"
-                    loading="lazy"
-                  />
+                  <>
+                    <img
+                      src={imgSrc}
+                      alt={variant.transformName}
+                      className="h-full w-full object-cover transition-transform duration-200 group-hover/card:scale-[1.03]"
+                      loading="lazy"
+                    />
+                    <button
+                      onClick={() => openDialog(variant, imgSrc)}
+                      className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/20 transition-colors cursor-zoom-in"
+                      title="Click to inspect annotations"
+                    >
+                      <ZoomIn className="size-8 text-white opacity-0 group-hover/card:opacity-100 transition-opacity drop-shadow-lg" />
+                    </button>
+                  </>
                 )}
               </div>
 
@@ -166,6 +212,99 @@ export function VariantPreview({ variants, onSelectionChange }: VariantPreviewPr
           );
         })}
       </div>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-8xl bg-white max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="text-sm">
+              {dialogVariant?.transformName} — {dialogVariant?.width}×{dialogVariant?.height}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto px-6 pb-6">
+            <div className="relative inline-block">
+              {dialogUrl && (
+                <img
+                  src={dialogUrl}
+                  alt={dialogVariant?.transformName}
+                  className="max-w-full h-auto rounded-lg border border-border"
+                />
+              )}
+              {dialogVariant && (
+                <svg
+                  className="absolute inset-0 pointer-events-none"
+                  width={dialogVariant.width}
+                  height={dialogVariant.height}
+                  viewBox={`0 0 ${dialogVariant.width} ${dialogVariant.height}`}
+                  style={{ width: '100%', height: '100%' }}
+                >
+                  {parseAnnotations(dialogVariant.yoloAnnotation).map((anno, i) => {
+                    const label = ANOMALY_CLASSES[anno.classId] || 'unknown';
+                    const color = CLASS_COLORS[label] || '#ef4444';
+                    const x = (anno.cx - anno.w / 2) * dialogVariant.width;
+                    const y = (anno.cy - anno.h / 2) * dialogVariant.height;
+                    const w = anno.w * dialogVariant.width;
+                    const h = anno.h * dialogVariant.height;
+
+                    return (
+                      <g key={i}>
+                        <rect
+                          x={x}
+                          y={y}
+                          width={w}
+                          height={h}
+                          fill="none"
+                          stroke={color}
+                          strokeWidth={2}
+                          opacity={0.9}
+                        />
+                        <text
+                          x={x}
+                          y={Math.max(y - 2, 12)}
+                          fill={color}
+                          fontSize={Math.max(10, dialogVariant.height * 0.025)}
+                          fontWeight="bold"
+                          style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}
+                        >
+                          {label}
+                        </text>
+                      </g>
+                    );
+                  })}
+                </svg>
+              )}
+            </div>
+
+            {dialogVariant && (
+              <div className="mt-4 space-y-2">
+                <div className="text-xs font-semibold text-muted-foreground">
+                  Annotations ({getAnnotationCount(dialogVariant.yoloAnnotation)}):
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {parseAnnotations(dialogVariant.yoloAnnotation).map((anno, i) => {
+                    const label = ANOMALY_CLASSES[anno.classId] || 'unknown';
+                    const color = CLASS_COLORS[label] || '#ef4444';
+                    return (
+                      <Badge
+                        key={i}
+                        variant="outline"
+                        className="text-[10px] gap-1"
+                        style={{ borderColor: color, color }}
+                      >
+                        <span
+                          className="inline-block size-2 rounded-full"
+                          style={{ backgroundColor: color }}
+                        />
+                        {label} — {anno.cx.toFixed(3)}, {anno.cy.toFixed(3)}, {anno.w.toFixed(3)}, {anno.h.toFixed(3)}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
