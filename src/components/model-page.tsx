@@ -23,6 +23,7 @@ import { VariantPreview } from '@/components/variant-preview';
 import { BatchUploader } from '@/components/batch-uploader';
 import { TrainingStatus } from '@/components/training-status';
 import { ModelVersionSelector } from '@/components/model-version-selector';
+import { DebugPanel } from '@/components/debug-panel';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -352,6 +353,7 @@ export function ModelPage() {
           )}
         </TabsContent>
       </Tabs>
+      <DebugPanel />
     </div>
   );
 }
