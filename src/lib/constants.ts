@@ -1,15 +1,17 @@
 export const ANOMALY_CLASSES = [
-  'Hotspot',
-  'Diode Failure',
-  'Sun Glare / False Positive',
-  'Soiling',
+  'Panel',
+  'crack',
+  'hotspot_multi_cell',
+  'hotspot_single_cell',
+  'shading',
 ] as const;
 
 export const CLASS_COLORS: Record<string, string> = {
-  'Hotspot': '#ef4444',
-  'Diode Failure': '#f97316',
-  'Sun Glare / False Positive': '#eab308',
-  'Soiling': '#3b82f6',
+  'Panel': '#6366f1',
+  'crack': '#ef4444',
+  'hotspot_multi_cell': '#ef4444',
+  'hotspot_single_cell': '#ef4444',
+  'shading': '#3b82f6',
 };
 
 export const CONFIDENCE_THRESHOLD_DEFAULT = 0.5;
