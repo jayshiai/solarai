@@ -20,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/lib/state';
 import { saveCorrection, generateId } from '@/lib/storage';
-import { ANOMALY_CLASSES } from '@/lib/constants';
+import { ANOMALY_CLASSES, CLASS_COLORS } from '@/lib/constants';
 import { Prediction } from '@/types';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
@@ -217,6 +217,7 @@ export function AnnotationLayer({
 
   const svgRects = predictions.map((pred, i) => {
     const isSelected = selectedPredictionIndex === i;
+    const color = CLASS_COLORS[pred.class] || '#ef4444';
     return (
       <rect
         key={`pred-${i}`}
@@ -225,7 +226,7 @@ export function AnnotationLayer({
         width={pred.width}
         height={pred.height}
         fill="none"
-        stroke={isSelected ? '#10b981' : '#ef4444'}
+        stroke={isSelected ? '#10b981' : color}
         strokeWidth={isSelected ? 3 : 2}
         className="cursor-pointer transition-all"
         onClick={(e) => {
