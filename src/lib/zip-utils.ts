@@ -39,6 +39,7 @@ export async function extractImagesFromZip(
 
     const sanitizedName = sanitizeZipFilename(entry.name);
     if (sanitizedName.toLowerCase().endsWith('.zip')) continue;
+    if (sanitizedName.startsWith('._') || entry.name.includes('__MACOSX/')) continue;
 
     const ext = sanitizedName.split('.').pop()?.toLowerCase();
     if (!ext || !ALLOWED_ZIP_IMAGE_EXTENSIONS.includes(ext as typeof ALLOWED_ZIP_IMAGE_EXTENSIONS[number])) {
