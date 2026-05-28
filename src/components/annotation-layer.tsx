@@ -371,9 +371,9 @@ export function AnnotationLayer({
         >
           <Button
             variant="outline"
-            size="sm"
+            size="lg"
             onClick={() => setIsPaused(!isPaused)}
-            className="shadow-lg bg-background/80 backdrop-blur"
+            className="shadow-lg bg-white hover:translate-y-[-5px]"
           >
             {isPaused ? 'Done' : 'Suggest Corrections'}
           </Button>
