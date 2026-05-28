@@ -45,7 +45,7 @@ export function useBatchProcessor(): UseBatchProcessorReturn {
     const { activeModelVersion: version } = useAppStore.getState();
 
     if (!ROBOFLOW_WORKSPACE || !ROBOFLOW_PROJECT || !ROBOFLOW_API_KEY) {
-      toast.error('Roboflow not configured. Set NEXT_PUBLIC_ROBOFLOW_* in .env.local');
+      toast.error('Configuration ERROR, setup workspace');
       return;
     }
 
