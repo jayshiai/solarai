@@ -24,7 +24,7 @@ export function ProgressOverlay({ progress, isRunning, onCancel, onViewReport, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <Card className="w-full max-w-[480px] shadow-xl">
+      <Card className="w-full max-w-[480px] shadow-xl bg-white">
         <CardHeader>
           <div className="flex items-center gap-3">
             {isRunning && (
