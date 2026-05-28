@@ -37,6 +37,15 @@ export interface TrainingStatus {
   createdAt: string;
 }
 
+export interface TrainingJob {
+  id: string;
+  status: TrainingJobStatus;
+  version: number;
+  model_type: string;
+  createdAt: string;
+  progress?: number;
+}
+
 export type ListVersionsParams = Record<string, never>;
 
 export interface VersionInfo {
@@ -118,7 +127,6 @@ export async function uploadImage(params: UploadParams): Promise<void> {
   formData.append('split', split);
   formData.append('annotation', annotation);
   formData.append('api_key', ROBOFLOW_API_KEY);
-  formData.append('workspace', ROBOFLOW_WORKSPACE);
   formData.append('project', ROBOFLOW_PROJECT);
 
   await fetchWithRetry('/api/robo-proxy', { method: 'POST', body: formData }, 'Image upload');
@@ -167,6 +175,13 @@ export async function pollTrainingStatus(params: PollParams): Promise<TrainingSt
     model_type: data.model_type,
     createdAt: data.createdAt ?? data.created ?? new Date().toISOString(),
   };
+}
+
+export async function listTrainingJobs(): Promise<TrainingJob[]> {
+  requireConfig();
+  const url = `https://api.roboflow.com/${ROBOFLOW_WORKSPACE}/${ROBOFLOW_PROJECT}/jobs?api_key=${ROBOFLOW_API_KEY}`;
+  const data = await fetchWithRetry<{ jobs?: TrainingJob[] }>(url, { method: 'GET' }, 'List training jobs');
+  return data.jobs ?? [];
 }
 
 export async function listVersions(_params: ListVersionsParams): Promise<VersionInfo[]> {
